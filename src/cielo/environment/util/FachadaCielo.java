@@ -39,7 +39,7 @@ public class FachadaCielo {
     * Método para realizar pagamento no cartão de crédito à vista na Cielo
     * 
     * @param producao Indica se é uma chamada de produção
-    * @param numPedidoSurfix Número do pedido gerado pela lojaVirtual
+    * @param numPedidoVirtual Número do pedido gerado pela lojaVirtual
     * @param valor Valor do pedido em centavos
     * @param bandeiraCartao Bandeira do cartao (FachadaCielo.BANDEIRA_VISA ou FachadaCielo.BANDEIRA_MASTERCARD)
     * @param numCartao Número do cartão
