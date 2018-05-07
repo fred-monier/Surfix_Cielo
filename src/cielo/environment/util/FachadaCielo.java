@@ -20,10 +20,8 @@ public class FachadaCielo {
 	private static final String MERCHANT_ID_TESTE = "5da83acc-6fd6-48ec-b22a-f7e9b5de8bef";
 	private static final String MERCHANT_KEY_TESTE = "ILWIORZCPKQUYZCYNSSJGXPDUAOPCODLGGAOFDGH";
 	
-	//Por enquanto, Teste igual a Produção
-	private static final String MERCHANT_ID_PRODUCAO = "5da83acc-6fd6-48ec-b22a-f7e9b5de8bef";
-	private static final String MERCHANT_KEY_PRODUCAO = "ILWIORZCPKQUYZCYNSSJGXPDUAOPCODLGGAOFDGH";
-	//************************************
+	private static final String MERCHANT_ID_PRODUCAO = "7e326012-288a-4acb-a961-c71e545b32bc";
+	private static final String MERCHANT_KEY_PRODUCAO = "UQR7HP9VrTGwoo0dFx8SRCKaUvfLi9gb47xMtnro";
 	
 	private static FachadaCielo instancia;
 	

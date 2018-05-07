@@ -4,11 +4,9 @@ import java.io.IOException;
 
 import cieloecommerce.sdk.Merchant;
 import cieloecommerce.sdk.ecommerce.CieloEcommerce;
-import cieloecommerce.sdk.ecommerce.Customer;
 import cieloecommerce.sdk.ecommerce.Environment;
 import cieloecommerce.sdk.ecommerce.Payment;
 import cieloecommerce.sdk.ecommerce.Sale;
-import cieloecommerce.sdk.ecommerce.request.CieloError;
 import cieloecommerce.sdk.ecommerce.request.CieloRequestException;
 
 public class TesteJSON {
@@ -27,7 +25,8 @@ public class TesteJSON {
 		//Configurando Sale
 		Sale sale = new Sale(TesteOrderId);
 		
-		Customer custumer = sale.customer("Teste Holder"); //Nome no Cartão	
+		//Customer custumer = sale.customer("Teste Holder"); //Nome no Cartão	
+		sale.customer("Teste Holder"); //Nome no Cartão
 		
 		Payment payment = sale.payment(15700); //Valor da compra em centavos
 		
@@ -60,7 +59,7 @@ public class TesteJSON {
 		} catch (CieloRequestException e) {
 		    // Em caso de erros de integração, podemos tratar o erro aqui.
 		    // os códigos de erro estão todos disponíveis no manual de integração.
-		    CieloError error = e.getError();
+		    //CieloError error = e.getError();
 		    
 		} catch (IOException e) {
 			e.printStackTrace();
