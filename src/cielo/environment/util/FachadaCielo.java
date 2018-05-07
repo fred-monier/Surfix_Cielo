@@ -326,18 +326,21 @@ public class FachadaCielo {
 	//***AlterarRecorrencia (desativar, cancelar)	
 	
 		
-	//DÚVIDA: Porque os códigos de operação realizada mostrados na simulação 
-	//não são os do Anexo? e o que significa o Status?
+	//DÚVIDA: 
 	
-	//O Cancelamento 300 dias pós-autorização, significa o quê?
+	//O Cancelamento 300 dias pós-autorização, significa o quê? 
+	//(PRAZO DO LOJISTA PARA CANCELAR)
 		
 	//A Consulta por paymentId acima, é apenas para Cartão de Crédito?
+	//(NÃO) São todos os meios
 	
 	//A Consulta de vendas por MerchantOrderId retorna os receivedDates nulo após a conversão de Json
-	//porque a consulta deles tem como parâmetro no JSon ReceveidDate e não ReceivedDate como está na classe
+	//porque a consulta deles tem como parâmetro no JSon ReceveidDate e não ReceivedDate como está na classe 
+	//(EVIDENCIAR)
 	
 	//Possibilidade de Ratear o pagamento do cartão para outro cliente além do
-	//MerchantId cadastrado? Usávamos um SubAdquirente
+	//MerchantId cadastrado? Usávamos um SubAdquirente  
+	//(NÃO)
 	
 	
 	private String recuperarErroIntegracao(int codigoErro) {
