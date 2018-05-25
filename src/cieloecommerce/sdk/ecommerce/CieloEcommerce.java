@@ -181,6 +181,60 @@ public class CieloEcommerce {
 
 		deactivateRecurrentSaleRequest.execute(recurrentPaymentId);
 	}
+	
+	//MONIER - CIELO
+	public RecurrentSale reactivateRecurrentSale(String recurrentPaymentId) throws IOException, CieloRequestException {
+		ReactivateRecurrentSaleRequest reactivateRecurrentSaleRequest = new ReactivateRecurrentSaleRequest(merchant, environment);
+
+		reactivateRecurrentSaleRequest.setHttpClient(httpClient);
+
+		return reactivateRecurrentSaleRequest.execute(recurrentPaymentId);
+	}		
+	
+	//MONIER - CIELO
+	public RecurrentSale updateEndDateRecurrentSale(String recurrentPaymentId, String endDate) throws IOException, CieloRequestException {
+		UpdateEndDateRecurrentSaleRequest updateEndDateRecurrentSaleRequest = new UpdateEndDateRecurrentSaleRequest(endDate, merchant, environment);
+
+		updateEndDateRecurrentSaleRequest.setHttpClient(httpClient);
+
+		return updateEndDateRecurrentSaleRequest.execute(recurrentPaymentId);
+	}
+	
+	//MONIER - CIELO
+	public RecurrentSale updateRecurrencyDayRecurrentSale(String recurrentPaymentId, int recurrencyDay) throws IOException, CieloRequestException {
+		UpdateRecurrencyDayRecurrentSaleRequest updateRecurrencyDayRecurrentSaleRequest = new UpdateRecurrencyDayRecurrentSaleRequest(recurrencyDay, merchant, environment);
+
+		updateRecurrencyDayRecurrentSaleRequest.setHttpClient(httpClient);
+
+		return updateRecurrencyDayRecurrentSaleRequest.execute(recurrentPaymentId);
+	}	
+	
+	//MONIER - CIELO
+	public RecurrentSale updateAmountRecurrentSale(String recurrentPaymentId, int amount) throws IOException, CieloRequestException {
+		UpdateAmountRecurrentSaleRequest updateAmountRecurrentSaleRequest = new UpdateAmountRecurrentSaleRequest(amount, merchant, environment);
+
+		updateAmountRecurrentSaleRequest.setHttpClient(httpClient);
+
+		return updateAmountRecurrentSaleRequest.execute(recurrentPaymentId);
+	}		
+			
+	//MONIER - CIELO
+	public RecurrentSale UpdateNextPaymentDateRecurrentSale(String recurrentPaymentId, String nextPaymentDate) throws IOException, CieloRequestException {
+		UpdateNextPaymentDateRecurrentSaleRequest updateNextPaymentDateRecurrentSaleRequest = new UpdateNextPaymentDateRecurrentSaleRequest(nextPaymentDate, merchant, environment);
+
+		updateNextPaymentDateRecurrentSaleRequest.setHttpClient(httpClient);
+
+		return updateNextPaymentDateRecurrentSaleRequest.execute(recurrentPaymentId);
+	}	
+	
+	//MONIER - CIELO
+	public RecurrentSale UpdateRecurrentSale(String recurrentPaymentId, Payment payment) throws IOException, CieloRequestException {
+		UpdateRecurrentSaleRequest updateRecurrentSaleRequest = new UpdateRecurrentSaleRequest(recurrentPaymentId, merchant, environment);
+
+		updateRecurrentSaleRequest.setHttpClient(httpClient);
+
+		return updateRecurrentSaleRequest.execute(payment);
+	}	
 
 	/**
 	 * Cancel a Sale on Cielo by paymentId and speficying the amount

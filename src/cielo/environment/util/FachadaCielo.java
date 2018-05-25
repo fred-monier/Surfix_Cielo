@@ -7,6 +7,8 @@ import cieloecommerce.sdk.ecommerce.CieloEcommerce;
 import cieloecommerce.sdk.ecommerce.Environment;
 import cieloecommerce.sdk.ecommerce.Payment;
 import cieloecommerce.sdk.ecommerce.QueryMerchantOrderResponse;
+import cieloecommerce.sdk.ecommerce.RecurrentPayment;
+import cieloecommerce.sdk.ecommerce.RecurrentSale;
 import cieloecommerce.sdk.ecommerce.Sale;
 import cieloecommerce.sdk.ecommerce.SaleResponse;
 import cieloecommerce.sdk.ecommerce.request.CieloError;
@@ -16,12 +18,20 @@ public class FachadaCielo {
 	
 	public static final String BANDEIRA_VISA = "Visa"; 
 	public static final String BANDEIRA_MASTERCARD = "Master";
+	
+	public static final String RECORRENCIA_MENSAL = "Monthly";//default
+	public static final String RECORRENCIA_BIMESTRAL = "Bimonthly";
+	public static final String RECORRENCIA_TRIMESTRAL = "Quarterly";	
+	public static final String RECORRENCIA_SEMESTRAL = "SemiAnnual";
+	public static final String RECORRENCIA_ANUAL = "Annual";		
 			
 	private static final String MERCHANT_ID_TESTE = "5da83acc-6fd6-48ec-b22a-f7e9b5de8bef";
 	private static final String MERCHANT_KEY_TESTE = "ILWIORZCPKQUYZCYNSSJGXPDUAOPCODLGGAOFDGH";
 	
 	private static final String MERCHANT_ID_PRODUCAO = "7e326012-288a-4acb-a961-c71e545b32bc";
-	private static final String MERCHANT_KEY_PRODUCAO = "UQR7HP9VrTGwoo0dFx8SRCKaUvfLi9gb47xMtnro";
+	private static final String MERCHANT_KEY_PRODUCAO = "UQR7HP9VrTGwoo0dFx8SRCKaUvfLi9gb47xMtnro";	
+	//private static final String MERCHANT_ID_PRODUCAO = "5da83acc-6fd6-48ec-b22a-f7e9b5de8bef";
+	//private static final String MERCHANT_KEY_PRODUCAO = "ILWIORZCPKQUYZCYNSSJGXPDUAOPCODLGGAOFDGH";
 	
 	private static FachadaCielo instancia;
 	
@@ -93,61 +103,15 @@ public class FachadaCielo {
 		    } else {		    	
 		    	throw new FachadaCieloException(null, "Transação não autorizada pela Cielo");
 		    }
-
-		    // Com a venda criada na Cielo, já temos o ID do pagamento, TID e demais
-		    // dados retornados pela Cielo
-		    // String paymentId = sale.getPayment().getPaymentId();	
-		    
-		    /*
-		      
-		    Principais campos retornados: 
-
-			ProofOfSale:		Número da autorização, identico ao NSU.					Texto	6	Texto alfanumérico
-			
-			Tid:				Id da transação na adquirente.							Texto	20	Texto alfanumérico
-			
-			AuthorizationCode:	Código de autorização.									Texto	6	Texto alfanumérico
-			
-			SoftDescriptor:		Texto impresso na fatura bancaria comprador 
-								- Exclusivo para VISA/MASTER 
-								- não permite caracteres especiais - Ver Anexo Cielo	Texto	13	Texto alfanumérico
-								
-			PaymentId:			Campo Identificador do Pedido.							Guid	36	xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-			
-			ECI:				Eletronic Commerce Indicator. 
-								Representa o quão segura é uma transação.				Texto	2	Exemplos: 7
-								
-			Status:				Status da Transação.									Byte	—	2
-			
-			ReturnCode:			Código de retorno da Adquirência.						Texto	32	Texto alfanumérico
-								---
-								Autorizado				0000.0000.0000.0001
-														0000.0000.0000.0004	Code: 4/6	Operação realizada com sucesso
-								Não Autorizado			0000.0000.0000.0002	Code: 05	Não Autorizada
-								Não Autorizado			0000.0000.0000.0003	Code: 57	Cartão Expirado
-								Não Autorizado			0000.0000.0000.0005	Code: 78	Cartão Bloqueado
-								Não Autorizado			0000.0000.0000.0006	Code: 99	Time Out
-								Não Autorizado			0000.0000.0000.0007	Code: 77	Cartão Cancelado
-								Não Autorizado			0000.0000.0000.0008	Code: 70	Problemas com o Cartão de Crédito
-								Autorização Aleatória	0000.0000.0000.0009	Code: 99	Operation Successful / Time Out
-								---
-									
-			ReturnMessage:		Mensagem de retorno da Adquirência.						Texto	512	Texto alfanumérico		     *
-			 
-		     */
-	    
-		    
+	    		   
 		} catch (CieloRequestException e) {
 			
-		    // Em caso de erros de integração, podemos tratar o erro aqui.
-		    // os códigos de erro estão todos disponíveis no manual de integração.
 		    CieloError error = e.getError();
 		    
 		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
 		    		    		    
 		} catch (IOException e) {
-			
-			//e.printStackTrace();			
+					
 			throw new FachadaCieloException(e, "Erro de comunicação"); 
 		}
 		
@@ -321,12 +285,8 @@ public class FachadaCielo {
 		return saleResp;
 	}
 		
-	//***CriarRecorrencia
-	//***ConsultarRecorrencia (ver o que foi de fato realizado)
-	//***AlterarRecorrencia (desativar, cancelar)	
 	
-		
-	//DÚVIDA: 
+	//DÚVIDAS: 
 	
 	//O Cancelamento 300 dias pós-autorização, significa o quê? 
 	//(PRAZO DO LOJISTA PARA CANCELAR)
@@ -493,5 +453,615 @@ public class FachadaCielo {
 		return res;		
 		
 	}
+	
+	//*****************************************************************//
+	
+	//DÚVIDAS NA RECORRÊNCIA
+	//EndDate é a data da última compra? e se ela estiver fora do intervalo regular para mais
+	//ou menos? Ex: recorrencia mensal iniciando hj, dia 01/12/17, mensal e terminando 15/11/18.
+	//R: Cancela antes do próximo pagamento.
+	
+	//Tentando gerar 4x uma transação posterior de recorrencia e não autorizando
+	//como o lojista fica sabendo? Notificado via URL de notificação (para ok ou não). Como é isso?
+	//R: Pelo fluxograma, cancela a recorrência (pelo atendente, não sabe)
+	//
+	//Não há como saber se o cartão foi alterado com sucesso pois não são retornados dados do mesmo após a alteração,
+	//  nem mesmo mascarados??
+	//
+	//Como saber se uma recorrencia foi descontada no caso de um cancelamento de cartão??
+	//
+	//Como saber se uma recorrencia programada está realmente desabilitada após sua consulta? status 1 ou 3?
+	//E qd eu reabilitá-la? se houver uma recorencia que passou um dia antes?
+	//
+	//Sobre os métodos de alteração de recorrência (depois de 2 de geração OK):
+	//##1)Método de alteração de dados do comprador de venda recorrente não implementado na SDK Java da Cielo (Modificando dados do comprador)
+	//  Não parece útil para a Cielo
+	//
+	//??2)Método de consulta de recorrência diz o seguinte: A Consulta da Recorrência tras dados sobre 
+		//o agendamento e sobre o processo de transações que se repetem. 
+		//Elas não retornam dados sobre as transações em si. Para isso, deve ser realizado um 
+		//GET na transação (Disponivel em “Consultanto vendas (???)
+	//
+	//**3)Método de alteração de Intervalo de Recorrência não funciona e não está claro como o novo intervalo deve ser enviado
+	//    talvez números de 1 a 5
+	//
+	//4)Método de alteração da data final de venda recorrente não implementado. Eu implementei a classe UpdateEndDateRecurrentSaleRequest
+	//
+	//5)Método de alteração do dia de recorrência de venda recorrente não implementado. Eu implementei a classe UpdateRecurrencyDayRecurrentSaleRequest
+	//
+	//6)Método de alteração do valor de recorrência de venda recorrente não implementado. Eu implementei a classe UpdateAmountRecurrentSaleRequest
+	//
+	//7)Método de alteração da data exata da próxima recorrência de venda recorrente não implementado. Eu implementei a classe UpdateNextPaymentDateRecurrentSaleRequest
+	//
+	//8)Método de desativação de recorrência programada já estava disponível.
+	//
+	//9)Método de reativação de recorrência programada não implementado. Eu implementei a classe ReactivateRecurrentSaleRequest
+	//
+	//10)Método de alteração de dados de pagamento de recorrência programada não implementado. Eu implementei a classe UpdateRecurrentSaleRequest
+	
+	/**
+    * Método para realizar pagamento recorrente no cartão de crédito com primeira parcela à vista na Cielo
+    * OBS: Guardar o paymentId individual dessa parcela inicial bem como o Payment.RecurrentPayment.recurrementPaymentId da recorrência
+    * 
+    * @param producao Indica se é uma chamada de produção
+    * @param numPedidoVirtual Número do pedido gerado pela lojaVirtual
+    * @param valor Valor do pedido em centavos
+    * @param bandeiraCartao Bandeira do cartao (FachadaCielo.BANDEIRA_VISA ou FachadaCielo.BANDEIRA_MASTERCARD)
+    * @param numCartao Número do cartão
+    * @param mesAnoExpDate Data que o cartão expira (formato MM/YYYY)
+    * @param nomeClienteCartao Nome do cliente do cartão
+    * @param cvv Código de segurança do cartão
+    * @param descricaoVenda Texto de até 13 caracteres impresso na fatura bancaria comprador - Exclusivo para VISA/MASTER
+    * @param intervalo Intervalo desejado de recorrência (FachadaCielo.RECORRENCIA_MENSAL, 
+    * 													  FachadaCielo.RECORRENCIA_BIMESTRAL, 
+    * 													  FachadaCielo.RECORRENCIA_TRIMESTRAL, 
+    * 													  FachadaCielo.RECORRENCIA_SEMESTRAL ou 
+    * 							   						  FachadaCielo.RECORRENCIA_ANUAL)
+    * 													  Sendo nulo = FachadaCielo.RECORRENCIA_MENSAL.
+    * @param dataFinal Data em que a recorrência será cancelada (formato YYYY-MM-DD)
+    * 													  Sendo nulo não terá data final
+    * 
+    * @return Payment Dados do pagamento realizado (PaymentId, TID e demais informações)
+    */
+	public Payment gerarPagamentoCreditoAVistaRecProg(boolean producao, String numPedidoVirtual, Integer valor,
+			String bandeiraCartao, String numCartao, String mesAnoExpDate, String nomeClienteCartao, 
+			String cvv, String descricaoVenda, String intervalo, String dataFinal) throws FachadaCieloException {
+					
+		Payment res;
+						
+		Merchant merchant;
+		Environment environment;
+		
+		if (producao) {
+			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+			environment = Environment.PRODUCTION;
+		} else {
+			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+			environment = Environment.SANDBOX;
+		}
+					
+		Sale sale = new Sale(numPedidoVirtual);
+		
+		sale.customer(nomeClienteCartao); 
+		
+		Payment payment = sale.payment(valor);
+		
+		if (descricaoVenda.length() > 13) {
+			descricaoVenda = descricaoVenda.substring(0, 13);
+		}
+		payment.setSoftDescriptor(descricaoVenda);
+		
+		//Recorrência
+		RecurrentPayment.Interval inter;
+		RecurrentPayment recurrentPayment = payment.recurrentPayment(true);
+		
+		if (intervalo == null || intervalo.equals(RECORRENCIA_MENSAL)) {				
+			inter = RecurrentPayment.Interval.Monthly; 
+			
+		}  else if (intervalo.equals(RECORRENCIA_BIMESTRAL)) {				
+			inter = RecurrentPayment.Interval.Bimonthly;
+			
+		}  else if (intervalo.equals(RECORRENCIA_TRIMESTRAL)) {
+			inter = RecurrentPayment.Interval.Quarterly;	
+			
+		}  else if (intervalo.equals(RECORRENCIA_SEMESTRAL)) {
+			inter = RecurrentPayment.Interval.SemiAnnual;		
+			
+		}  else if (intervalo.equals(RECORRENCIA_ANUAL)) {
+			inter = RecurrentPayment.Interval.Annual;		
+			
+		} else {
+			inter = RecurrentPayment.Interval.Monthly; 
+		}
+		recurrentPayment.setInterval(inter);
+		recurrentPayment.setEndDate(dataFinal);
+		//
+					
+		payment.creditCard(cvv, bandeiraCartao)
+			.setExpirationDate(mesAnoExpDate)
+			.setCardNumber(numCartao)
+			.setHolder(nomeClienteCartao);
+		
+		try {
+			
+		    sale = new CieloEcommerce(merchant, environment).createSale(sale);
+		    
+		    if (sale != null) {		    		    	
+		    	res = sale.getPayment();		    	
+		    } else {		    	
+		    	throw new FachadaCieloException(null, "Transação não autorizada pela Cielo");
+		    }
+
+		    		    
+		} catch (CieloRequestException e) {
+						    
+		    CieloError error = e.getError();
+		    
+		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
+		    		    		    
+		} catch (IOException e) {
+			
+			throw new FachadaCieloException(e, "Erro de comunicação"); 
+		}
+		
+		return res;
+	}
+	
+	/**
+    * Método para realizar pagamento recorrente no cartão de crédito com primeira parcela agendada na Cielo
+    * OBS: Guardar o paymentId individual dessa parcela inicial bem como o Payment.RecurrentPayment.recurrementPaymentId da recorrência
+    * 
+    * @param producao Indica se é uma chamada de produção
+    * @param numPedidoVirtual Número do pedido gerado pela lojaVirtual
+    * @param valor Valor do pedido em centavos
+    * @param bandeiraCartao Bandeira do cartao (FachadaCielo.BANDEIRA_VISA ou FachadaCielo.BANDEIRA_MASTERCARD)
+    * @param numCartao Número do cartão
+    * @param mesAnoExpDate Data que o cartão expira (formato MM/YYYY)
+    * @param nomeClienteCartao Nome do cliente do cartão
+    * @param cvv Código de segurança do cartão
+    * @param descricaoVenda Texto de até 13 caracteres impresso na fatura bancaria comprador - Exclusivo para VISA/MASTER
+    * @param dataInicial Data em que o primeiro pagamento será autorizado dando início à recorrência (formato YYYY-MM-DD)
+    * @param intervalo Intervalo desejado de recorrência (FachadaCielo.RECORRENCIA_MENSAL, 
+    * 													  FachadaCielo.RECORRENCIA_BIMESTRAL, 
+    * 													  FachadaCielo.RECORRENCIA_TRIMESTRAL, 
+    * 													  FachadaCielo.RECORRENCIA_SEMESTRAL ou 
+    * 							   						  FachadaCielo.RECORRENCIA_ANUAL)
+    * 													  Sendo nulo = FachadaCielo.RECORRENCIA_MENSAL.
+    * @param dataFinal Data em que a recorrência será cancelada (formato YYYY-MM-DD). Sendo nulo não terá data final
+    * 
+    * @return Payment Dados do pagamento realizado (PaymentId, TID e demais informações)
+    */
+	public Payment gerarPagamentoCreditoAgendadoRecProg(boolean producao, String numPedidoVirtual, Integer valor,
+			String bandeiraCartao, String numCartao, String mesAnoExpDate, String nomeClienteCartao, 
+			String cvv, String descricaoVenda, String dataInicial, String intervalo, String dataFinal) throws FachadaCieloException {
+					
+		Payment res;
+						
+		Merchant merchant;
+		Environment environment;
+		
+		if (producao) {
+			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+			environment = Environment.PRODUCTION;
+		} else {
+			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+			environment = Environment.SANDBOX;
+		}
+					
+		Sale sale = new Sale(numPedidoVirtual);
+		
+		sale.customer(nomeClienteCartao); 
+		
+		Payment payment = sale.payment(valor);
+		
+		if (descricaoVenda.length() > 13) {
+			descricaoVenda = descricaoVenda.substring(0, 13);
+		}
+		payment.setSoftDescriptor(descricaoVenda);
+		
+		//Recorrência
+		RecurrentPayment.Interval inter;
+		RecurrentPayment recurrentPayment = payment.recurrentPayment(false);
+		recurrentPayment.setStartDate(dataInicial);
+		
+		if (intervalo == null || intervalo.equals(RECORRENCIA_MENSAL)) {				
+			inter = RecurrentPayment.Interval.Monthly; 
+			
+		}  else if (intervalo.equals(RECORRENCIA_BIMESTRAL)) {				
+			inter = RecurrentPayment.Interval.Bimonthly;
+			
+		}  else if (intervalo.equals(RECORRENCIA_TRIMESTRAL)) {
+			inter = RecurrentPayment.Interval.Quarterly;	
+			
+		}  else if (intervalo.equals(RECORRENCIA_SEMESTRAL)) {
+			inter = RecurrentPayment.Interval.SemiAnnual;		
+			
+		}  else if (intervalo.equals(RECORRENCIA_ANUAL)) {
+			inter = RecurrentPayment.Interval.Annual;		
+			
+		} else {
+			inter = RecurrentPayment.Interval.Monthly; 
+		}
+		recurrentPayment.setInterval(inter);
+		recurrentPayment.setEndDate(dataFinal);
+		//
+					
+		payment.creditCard(cvv, bandeiraCartao)
+			.setExpirationDate(mesAnoExpDate)
+			.setCardNumber(numCartao)
+			.setHolder(nomeClienteCartao);
+		
+		try {
+			
+		    sale = new CieloEcommerce(merchant, environment).createSale(sale);
+		    
+		    if (sale != null) {		    		    	
+		    	res = sale.getPayment();		    	
+		    } else {		    	
+		    	throw new FachadaCieloException(null, "Transação não autorizada pela Cielo");
+		    }
+
+		    		    
+		} catch (CieloRequestException e) {
+						    
+		    CieloError error = e.getError();
+		    
+		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
+		    		    		    
+		} catch (IOException e) {
+			
+			throw new FachadaCieloException(e, "Erro de comunicação"); 
+		}
+		
+		return res;
+	}
+		
+	/**
+    * Método para consultar venda com pagamento recorrente no cartão de crédito por recurrentPaymentId 
+    * 
+    * @param producao Indica se é uma chamada de produção
+    * @param recurrentPaymentId Número da recorrência gerado pela Cielo
+    * 
+    * @return RecurrentSale Dados da venda recorrente realizada
+    */	
+	public RecurrentSale consultarVendaCreditoRecProgPorRecurrentPaymentId(boolean producao, String recurrentPaymentId) 
+			throws FachadaCieloException {
+		
+		RecurrentSale recSale;
+		
+		Merchant merchant;
+		Environment environment;
+		
+		if (producao) {
+			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+			environment = Environment.PRODUCTION;
+		} else {
+			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+			environment = Environment.SANDBOX;
+		}
+		
+		try {
+			
+			recSale = new CieloEcommerce(merchant, environment).queryRecurrentSale(recurrentPaymentId);
+		
+			if (recSale == null) {		    		    	
+		    	throw new FachadaCieloException(null, "Consulta não autorizada pela Cielo");
+		    }
+			
+		} catch (CieloRequestException e) {
+			
+			CieloError error = e.getError();
+		    
+		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
+		    				
+		} catch (IOException e) {
+							
+			throw new FachadaCieloException(e, "Erro de comunicação"); 
+		}
+					
+		return recSale;
+		
+	}
+	
+	/**
+    * Método para alterar a data final de uma venda com pagamento recorrente no cartão de crédito por recurrentPaymentId 
+    * 
+    * @param producao Indica se é uma chamada de produção
+    * @param recurrentPaymentId Número da recorrência gerado pela Cielo
+    * @param dataFinal Data em que a recorrência será cancelada (formato YYYY-MM-DD). Sendo nulo não terá data final
+    * 
+    * @return void
+    */	
+	public void alterarVendaCreditoRecProgDataFinalPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, String dataFinal) 
+			throws FachadaCieloException {				
+		
+		Merchant merchant;
+		Environment environment;
+		
+		if (producao) {
+			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+			environment = Environment.PRODUCTION;
+		} else {
+			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+			environment = Environment.SANDBOX;
+		}
+		
+		try {
+			
+			new CieloEcommerce(merchant, environment).updateEndDateRecurrentSale(recurrentPaymentId, dataFinal);		
+			
+		} catch (CieloRequestException e) {
+			
+			CieloError error = e.getError();
+		    
+		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
+		    				
+		} catch (IOException e) {
+							
+			throw new FachadaCieloException(e, "Erro de comunicação"); 
+		}								
+		
+	}
+	
+	/**
+    * Método para alterar os dados de um pagamento recorrente no cartão de crédito na Cielo por recurrentPaymentId
+    * 
+    * @param producao Indica se é uma chamada de produção
+    * @param recurrentPaymentId Número da recorrência gerado pela Cielo
+    * @param valor Valor do pedido em centavos
+    * @param bandeiraCartao Bandeira do cartao (FachadaCielo.BANDEIRA_VISA ou FachadaCielo.BANDEIRA_MASTERCARD)
+    * @param numCartao Número do cartão
+    * @param mesAnoExpDate Data que o cartão expira (formato MM/YYYY)
+    * @param nomeClienteCartao Nome do cliente do cartão  
+    * @param cvv Código de segurança do cartão  
+    * @param descricaoVenda Texto de até 13 caracteres impresso na fatura bancaria comprador - Exclusivo para VISA/MASTER
+    * 
+    * @return Payment Dados do pagamento realizado (PaymentId, TID e demais informações)
+    */
+	public void alterarPagamentoCreditoRecProgPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, int valor,
+			String bandeiraCartao, String numCartao, String mesAnoExpDate, String nomeClienteCartao, 
+			String cvv, String descricaoVenda) throws FachadaCieloException {
+										
+		Merchant merchant;
+		Environment environment;
+		
+		if (producao) {
+			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+			environment = Environment.PRODUCTION;
+		} else {
+			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+			environment = Environment.SANDBOX;
+		}					 
+		
+		Payment payment = new Payment(valor);
+		
+		if (descricaoVenda.length() > 13) {
+			descricaoVenda = descricaoVenda.substring(0, 13);
+		}
+		payment.setSoftDescriptor(descricaoVenda);
+							
+		payment.creditCard(cvv, bandeiraCartao)
+			.setExpirationDate(mesAnoExpDate)
+			.setCardNumber(numCartao)
+			.setHolder(nomeClienteCartao);
+		
+		try {
+			
+		    new CieloEcommerce(merchant, environment).UpdateRecurrentSale(recurrentPaymentId, payment);
+		    		    		    
+		} catch (CieloRequestException e) {
+						    
+		    CieloError error = e.getError();
+		    
+		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
+		    		    		    
+		} catch (IOException e) {
+			
+			throw new FachadaCieloException(e, "Erro de comunicação"); 
+		}		
+	}		
+	
+	/**
+    * Método para alterar o dia do pagamento de uma venda com pagamento recorrente no cartão de 
+    * crédito na Cielo por recurrentPaymentId 
+    * 
+    * @param producao Indica se é uma chamada de produção
+    * @param recurrentPaymentId Número da recorrência gerado pela Cielo
+    * @param diaRec Dia do mês em que a recorrência se repetirá
+    * 
+    * @return void
+    */	
+	public void alterarVendaCreditoRecProgDiaRecPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, int diaRec) 
+			throws FachadaCieloException {				
+		
+		Merchant merchant;
+		Environment environment;
+		
+		if (producao) {
+			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+			environment = Environment.PRODUCTION;
+		} else {
+			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+			environment = Environment.SANDBOX;
+		}
+		
+		try {
+			
+			new CieloEcommerce(merchant, environment).updateRecurrencyDayRecurrentSale(recurrentPaymentId, diaRec);		
+			
+		} catch (CieloRequestException e) {
+			
+			CieloError error = e.getError();
+		    
+		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
+		    				
+		} catch (IOException e) {
+							
+			throw new FachadaCieloException(e, "Erro de comunicação"); 
+		}								
+		
+	}	
+
+	/**
+    * Método para alterar o valor recorrente de uma venda com pagamento recorrente no cartão de 
+    * crédito na Cielo por recurrentPaymentId 
+    * 
+    * @param producao Indica se é uma chamada de produção
+    * @param recurrentPaymentId Número da recorrência gerado pela Cielo
+    * @param valorRec Valor em centavos do pagamento recorrente
+    * 
+    * @return void
+    */	
+	public void alterarVendaCreditoRecProgValorRecPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, int valorRec) 
+			throws FachadaCieloException {				
+		
+		Merchant merchant;
+		Environment environment;
+		
+		if (producao) {
+			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+			environment = Environment.PRODUCTION;
+		} else {
+			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+			environment = Environment.SANDBOX;
+		}
+		
+		try {
+			
+			new CieloEcommerce(merchant, environment).updateAmountRecurrentSale(recurrentPaymentId, valorRec);		
+			
+		} catch (CieloRequestException e) {
+			
+			CieloError error = e.getError();
+		    
+		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
+		    				
+		} catch (IOException e) {
+							
+			throw new FachadaCieloException(e, "Erro de comunicação"); 
+		}								
+		
+	}	
+
+	/**
+    * Método para modificar a data do próximo pagamento de uma venda com pagamento recorrente no cartão de 
+    * crédito na Cielo por recurrentPaymentId (não altera a data de recorrência, apenas define a data do próximo pagamento)
+    * 
+    * @param producao Indica se é uma chamada de produção
+    * @param recurrentPaymentId Número da recorrência gerado pela Cielo
+    * @param dataProxRec Data da próxima recorrência (formato YYYY-MM-DD)
+    * 
+    * @return void
+    */	
+	public void alterarVendaCreditoRecProgDataProxRecPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, String dataProxRec) 
+			throws FachadaCieloException {				
+		
+		Merchant merchant;
+		Environment environment;
+		
+		if (producao) {
+			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+			environment = Environment.PRODUCTION;
+		} else {
+			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+			environment = Environment.SANDBOX;
+		}
+		
+		try {
+			
+			new CieloEcommerce(merchant, environment).UpdateNextPaymentDateRecurrentSale(recurrentPaymentId, dataProxRec);		
+			
+		} catch (CieloRequestException e) {
+			
+			CieloError error = e.getError();
+		    
+		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
+		    				
+		} catch (IOException e) {
+							
+			throw new FachadaCieloException(e, "Erro de comunicação"); 
+		}								
+		
+	}	
+
+	/**
+    * Método para desabilitar uma venda com pagamento recorrente no cartão de crédito na Cielo por recurrentPaymentId 
+    * 
+    * @param producao Indica se é uma chamada de produção
+    * @param recurrentPaymentId Número da recorrência gerado pela Cielo
+    * 
+    * @return void
+    */	
+	public void desabilitarVendaCreditoRecProgPorRecurrentPaymentId(boolean producao, String recurrentPaymentId) 
+			throws FachadaCieloException {				
+		
+		Merchant merchant;
+		Environment environment;
+		
+		if (producao) {
+			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+			environment = Environment.PRODUCTION;
+		} else {
+			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+			environment = Environment.SANDBOX;
+		}
+		
+		try {
+			
+			new CieloEcommerce(merchant, environment).deactivateRecurrentSale(recurrentPaymentId);		
+			
+		} catch (CieloRequestException e) {
+			
+			CieloError error = e.getError();
+		    
+		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
+		    				
+		} catch (IOException e) {
+							
+			throw new FachadaCieloException(e, "Erro de comunicação"); 
+		}								
+		
+	}
+		
+	/**
+    * Método para reabilitar uma venda com pagamento recorrente no cartão de crédito na Cielo por recurrentPaymentId 
+    * 
+    * @param producao Indica se é uma chamada de produção
+    * @param recurrentPaymentId Número da recorrência gerado pela Cielo
+    * 
+    * @return void
+    */	
+	public void reabilitarVendaCreditoRecProgPorRecurrentPaymentId(boolean producao, String recurrentPaymentId) 
+			throws FachadaCieloException {				
+		
+		Merchant merchant;
+		Environment environment;
+		
+		if (producao) {
+			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+			environment = Environment.PRODUCTION;
+		} else {
+			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+			environment = Environment.SANDBOX;
+		}
+		
+		try {
+			
+			new CieloEcommerce(merchant, environment).reactivateRecurrentSale(recurrentPaymentId);		
+			
+		} catch (CieloRequestException e) {
+			
+			CieloError error = e.getError();
+		    
+		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
+		    				
+		} catch (IOException e) {
+							
+			throw new FachadaCieloException(e, "Erro de comunicação"); 
+		}								
+		
+	}	
+
+
 
 }

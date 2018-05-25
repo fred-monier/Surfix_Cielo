@@ -1,6 +1,6 @@
 package cielo.environment.util;
 
-import cieloecommerce.sdk.ecommerce.Sale;
+import cieloecommerce.sdk.ecommerce.RecurrentSale;
 
 public class TesteFachadaCielo {
 
@@ -8,8 +8,9 @@ public class TesteFachadaCielo {
 		
 		FachadaCielo fachada = FachadaCielo.getInstancia();
 		
+		//Módulo 1 ******************************************************
 		
-		//Pagamento no Cartão de Crédito
+		//Pagamento no Cartão de Crédito (à vista)
 		/*
 		try {
 					
@@ -32,9 +33,9 @@ public class TesteFachadaCielo {
 		*/
 		
 		//Consulta de Venda no Cartão de Crédito por paymentId
-		//
+		/*
 		try {
-			Sale sale = fachada.consultarVendaCreditoAVistaPorPaymentId(false, "49388f61-c51d-4ebd-8969-db16383339d0");
+			Sale sale = fachada.consultarVendaCreditoAVistaPorPaymentId(false, "e157898f-7989-4768-bd08-8e07f53e7f47");
 			
 			System.out.println("Operação concluída");			
 			System.out.println("Sale: " + sale.toString());
@@ -47,12 +48,12 @@ public class TesteFachadaCielo {
 				e.getExcecaoOriginal().printStackTrace();
 			}							
 		}
-		//
+		*/
 		
 		//Consulta de Vendas por merchantOrderId
 		/*
 		try {
-			Payment[] payments = fachada.consultarVendasPorNumPedidoVirtual(false, "2018010102");
+			Payment[] payments = fachada.consultarVendasPorNumPedidoVirtual(false, "2018000001");
 			
 			System.out.println("Operação concluída");	
 			System.out.println();
@@ -97,7 +98,196 @@ public class TesteFachadaCielo {
 		}		
 		*/
 		
-
+		//Módulo 1 ******************************************************
+		
+		//Módulo 2 ******************************************************
+		
+		//Pagamento no Cartão de Crédito por Recorrência Programada (à vista)
+		/*
+		try {
+					
+			Payment payment = fachada.gerarPagamentoCreditoAVistaRecProg(false, "2018000321", 88800, 
+					FachadaCielo.BANDEIRA_VISA, "0000000000000001", 
+					"12/2022", "Sicrano de Tal", "456", "Sistema Ennon@", FachadaCielo.RECORRENCIA_MENSAL, "2020-11-10");
+			
+			System.out.println("Operação concluída");			
+			System.out.println("Payment: " + payment.toString());
+			
+			
+		} catch (FachadaCieloException e) {
+			
+			System.out.println("Operação NÃO concluída: " + e.getMensagem());
+			
+			if (e.getExcecaoOriginal() != null) {
+				e.getExcecaoOriginal().printStackTrace();
+			}							
+		}
+		*/				
+		
+		//Pagamento no Cartão de Crédito por Recorrência Programada (agendado)
+		/*
+		try {
+					
+			Payment payment = fachada.gerarPagamentoCreditoAgendadoRecProg(false, "2018000001", 77700, 
+					FachadaCielo.BANDEIRA_VISA, "0000000000000001", 
+					"12/2018", "Fulano de Tal", "123", "Sistema Orion@", "2018-05-30", FachadaCielo.RECORRENCIA_MENSAL, "2019-11-10");
+			
+			System.out.println("Operação concluída");			
+			System.out.println("Payment: " + payment.toString());
+			
+			
+		} catch (FachadaCieloException e) {
+			
+			System.out.println("Operação NÃO concluída: " + e.getMensagem());
+			
+			if (e.getExcecaoOriginal() != null) {
+				e.getExcecaoOriginal().printStackTrace();
+			}							
+		}
+		*/								
+		
+		//Alteração de Data Final de Venda no Cartão de Crédito via recorrência por recurrrentPaymentId	
+		/*
+		try {
+			fachada.alterarVendaCreditoRecProgDataFinalPorRecurrentPaymentId(false, "d8916a5d-1395-40ce-8b94-0b5ddfc15242", "2019-04-04");
+			
+			System.out.println("Operação concluída");						
+		
+		} catch (FachadaCieloException e) {
+			
+			System.out.println("Operação NÃO concluída: " + e.getMensagem());
+			
+			if (e.getExcecaoOriginal() != null) {
+				e.getExcecaoOriginal().printStackTrace();
+			}							
+		}
+		*/			
+		
+		//Alteração do dia de pagamento no Cartão de Crédito via recorrência por recurrrentPaymentId	
+		/*
+		try {
+			fachada.alterarVendaCreditoRecProgDiaRecPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8", 4);
+			
+			System.out.println("Operação concluída");						
+		
+		} catch (FachadaCieloException e) {
+			
+			System.out.println("Operação NÃO concluída: " + e.getMensagem());
+			
+			if (e.getExcecaoOriginal() != null) {
+				e.getExcecaoOriginal().printStackTrace();
+			}							
+		}
+		*/			
+		
+		//Alteração do valor de pagamento no Cartão de Crédito via recorrência por recurrrentPaymentId	
+		/*
+		try {
+			fachada.alterarVendaCreditoRecProgValorRecPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8", 777888);
+			
+			System.out.println("Operação concluída");						
+		
+		} catch (FachadaCieloException e) {
+			
+			System.out.println("Operação NÃO concluída: " + e.getMensagem());
+			
+			if (e.getExcecaoOriginal() != null) {
+				e.getExcecaoOriginal().printStackTrace();
+			}							
+		}
+		*/		
+		
+		//Alteração da data do próxima pagamento de um pagamento no Cartão de Crédito via recorrência por recurrrentPaymentId	
+		/*
+		try {
+			fachada.alterarVendaCreditoRecProgDataProxRecPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8", "2018-05-26");
+			
+			System.out.println("Operação concluída");						
+		
+		} catch (FachadaCieloException e) {
+			
+			System.out.println("Operação NÃO concluída: " + e.getMensagem());
+			
+			if (e.getExcecaoOriginal() != null) {
+				e.getExcecaoOriginal().printStackTrace();
+			}							
+		}
+		*/				
+		
+		//Desabilita um pagamento no Cartão de Crédito via recorrência por recurrrentPaymentId	
+		/*
+		try {
+			fachada.desabilitarVendaCreditoRecProgPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8");
+			
+			System.out.println("Operação concluída");						
+		
+		} catch (FachadaCieloException e) {
+			
+			System.out.println("Operação NÃO concluída: " + e.getMensagem());
+			
+			if (e.getExcecaoOriginal() != null) {
+				e.getExcecaoOriginal().printStackTrace();
+			}							
+		}
+		*/				
+		
+		//Reabilita um pagamento no Cartão de Crédito via recorrência por recurrrentPaymentId	
+		/*
+		try {
+			fachada.reabilitarVendaCreditoRecProgPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8");
+			
+			System.out.println("Operação concluída");						
+		
+		} catch (FachadaCieloException e) {
+			
+			System.out.println("Operação NÃO concluída: " + e.getMensagem());
+			
+			if (e.getExcecaoOriginal() != null) {
+				e.getExcecaoOriginal().printStackTrace();
+			}							
+		}
+		*/	
+		
+		//Alteração de dados de pagamento recorrente no Cartão de Crédito por recurrrentPaymentId
+		/*
+		try {
+		
+			fachada.alterarPagamentoCreditoRecProgPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8",
+					99900, FachadaCielo.BANDEIRA_VISA, "1111111111111111", "12/2030", "John Lendo", "789", "Sistema Secreto");
+			
+			System.out.println("Operação concluída");			
+		
+		} catch (FachadaCieloException e) {
+			
+			System.out.println("Operação NÃO concluída: " + e.getMensagem());
+			
+			if (e.getExcecaoOriginal() != null) {
+				e.getExcecaoOriginal().printStackTrace();
+			}							
+		}
+		*/			
+		
+		//Consulta de Venda no Cartão de Crédito via recorrência por recurrrentPaymentId
+		//
+		try {
+			RecurrentSale recSale = fachada.consultarVendaCreditoRecProgPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8");
+			
+			System.out.println("Operação concluída");			
+			System.out.println("Sale: " + recSale.toString());
+		
+		} catch (FachadaCieloException e) {
+			
+			System.out.println("Operação NÃO concluída: " + e.getMensagem());
+			
+			if (e.getExcecaoOriginal() != null) {
+				e.getExcecaoOriginal().printStackTrace();
+			}							
+		}
+		//					
+		
+		//Módulo 2 ******************************************************		
 	}
+	
+	
 
 }
