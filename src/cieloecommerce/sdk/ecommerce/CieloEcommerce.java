@@ -135,9 +135,7 @@ public class CieloEcommerce {
 
 		return merchantOrder;
 	}
-
 	
-
 	/**
 	 * Query a RecurrentSale on Cielo by recurrentPaymentId
 	 *
@@ -190,6 +188,15 @@ public class CieloEcommerce {
 
 		return reactivateRecurrentSaleRequest.execute(recurrentPaymentId);
 	}		
+	
+	//MONIER - CIELO
+	public RecurrentSale updateIntervalRecurrentSale(String recurrentPaymentId, int months) throws IOException, CieloRequestException {
+		UpdateIntervalRecurrentSaleRequest updateIntervalRecurrentSaleRequest = new UpdateIntervalRecurrentSaleRequest(months, merchant, environment);
+
+		updateIntervalRecurrentSaleRequest.setHttpClient(httpClient);
+
+		return updateIntervalRecurrentSaleRequest.execute(recurrentPaymentId);
+	}	
 	
 	//MONIER - CIELO
 	public RecurrentSale updateEndDateRecurrentSale(String recurrentPaymentId, String endDate) throws IOException, CieloRequestException {

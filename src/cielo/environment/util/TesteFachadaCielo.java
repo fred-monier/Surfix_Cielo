@@ -212,7 +212,26 @@ public class TesteFachadaCielo {
 				e.getExcecaoOriginal().printStackTrace();
 			}							
 		}
-		*/				
+		*/		
+		
+		//Alteração do intervalo de recorrência de pagamento no Cartão de Crédito via recorrência por recurrrentPaymentId	
+		/*
+		try {
+			fachada.alterarVendaCreditoRecProgIntervaloPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8", FachadaCielo.RECORRENCIA_BIMESTRAL);
+			
+			System.out.println();
+			System.out.println("Operação concluída");						
+		
+		} catch (FachadaCieloException e) {
+			
+			System.out.println();
+			System.out.println("Operação NÃO concluída: " + e.getMensagem());
+			
+			if (e.getExcecaoOriginal() != null) {
+				e.getExcecaoOriginal().printStackTrace();
+			}							
+		}
+		*/			
 		
 		//Desabilita um pagamento no Cartão de Crédito via recorrência por recurrrentPaymentId	
 		/*
@@ -272,11 +291,13 @@ public class TesteFachadaCielo {
 		try {
 			RecurrentSale recSale = fachada.consultarVendaCreditoRecProgPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8");
 			
+			System.out.println();
 			System.out.println("Operação concluída");			
 			System.out.println("Sale: " + recSale.toString());
 		
 		} catch (FachadaCieloException e) {
 			
+			System.out.println();
 			System.out.println("Operação NÃO concluída: " + e.getMensagem());
 			
 			if (e.getExcecaoOriginal() != null) {
