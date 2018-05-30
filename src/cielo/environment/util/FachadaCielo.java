@@ -574,7 +574,12 @@ public class FachadaCielo {
     * @param producao Indica se é uma chamada de produção
     * @param recurrentPaymentId Número da recorrência gerado pela Cielo
     * 
-    * @return RecurrentSale Dados da venda recorrente realizada
+    * @return RecurrentSale Dados da venda recorrente realizada (veririfcar campo recurrentPayment.status
+    * 																1 - Ativo 
+    *																2 - Finalizado 
+    *																3 - Desativada pelo Lojista 
+    *																4 - Desativada por numero de retentativas 
+    *																5 - Desativada por cartão de crédito vencido)
     */	
 	public RecurrentSale consultarVendaCreditoRecProgPorRecurrentPaymentId(boolean producao, String recurrentPaymentId) 
 			throws FachadaCieloException {
@@ -619,50 +624,6 @@ public class FachadaCielo {
 		}
 					
 		return recSale;
-		
-	}
-	
-	/**
-    * Método para alterar a data final de uma venda com pagamento recorrente no cartão de crédito por recurrentPaymentId 
-    * 
-    * @param producao Indica se é uma chamada de produção
-    * @param recurrentPaymentId Número da recorrência gerado pela Cielo
-    * @param dataFinal Data em que a recorrência será cancelada (formato YYYY-MM-DD). Sendo nulo não terá data final
-    * 
-    * @return void
-    */	
-	public void alterarVendaCreditoRecProgDataFinalPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, String dataFinal) 
-			throws FachadaCieloException {				
-		
-		Merchant merchant;
-		Environment environment;
-		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
-			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
-			environment = Environment.SANDBOX;
-		}
-		
-		try {
-			
-			new CieloEcommerce(merchant, environment).updateEndDateRecurrentSale(recurrentPaymentId, dataFinal);		
-			
-		} catch (CieloRequestException e) {
-			
-			System.out.println();
-			
-			CieloError error = e.getError();
-		    
-		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
-		    				
-		} catch (IOException e) {
-			
-			System.out.println();
-							
-			throw new FachadaCieloException(e, "Erro de comunicação"); 
-		}								
 		
 	}
 	
@@ -726,8 +687,52 @@ public class FachadaCielo {
 			
 			throw new FachadaCieloException(e, "Erro de comunicação"); 
 		}		
-	}		
+	}			
 	
+	/**
+    * Método para alterar a data final de uma venda com pagamento recorrente no cartão de crédito por recurrentPaymentId 
+    * 
+    * @param producao Indica se é uma chamada de produção
+    * @param recurrentPaymentId Número da recorrência gerado pela Cielo
+    * @param dataFinal Data em que a recorrência será cancelada (formato YYYY-MM-DD). Sendo nulo não terá data final
+    * 
+    * @return void
+    */	
+	public void alterarVendaCreditoRecProgDataFinalPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, String dataFinal) 
+			throws FachadaCieloException {				
+		
+		Merchant merchant;
+		Environment environment;
+		
+		if (producao) {
+			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+			environment = Environment.PRODUCTION;
+		} else {
+			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+			environment = Environment.SANDBOX;
+		}
+		
+		try {
+			
+			new CieloEcommerce(merchant, environment).updateEndDateRecurrentSale(recurrentPaymentId, dataFinal);		
+			
+		} catch (CieloRequestException e) {
+			
+			System.out.println();
+			
+			CieloError error = e.getError();
+		    
+		    throw new FachadaCieloException(e, e.getMessage() + " (" + this.recuperarErroIntegracao(error.getCode()) + ")");
+		    				
+		} catch (IOException e) {
+			
+			System.out.println();
+							
+			throw new FachadaCieloException(e, "Erro de comunicação"); 
+		}								
+		
+	}
+			
 	/**
     * Método para alterar o dia do pagamento de uma venda com pagamento recorrente no cartão de 
     * crédito na Cielo por recurrentPaymentId 
@@ -820,7 +825,7 @@ public class FachadaCielo {
 
 	/**
     * Método para modificar a data do próximo pagamento de uma venda com pagamento recorrente no cartão de 
-    * crédito na Cielo por recurrentPaymentId (não altera a data de recorrência, apenas define a data do próximo pagamento)
+    * crédito na Cielo por recurrentPaymentId (não altera o dia da recorrência nem o intervalo, apenas define a data do próximo pagamento)
     * 
     * @param producao Indica se é uma chamada de produção
     * @param recurrentPaymentId Número da recorrência gerado pela Cielo
@@ -865,7 +870,7 @@ public class FachadaCielo {
 	
 	/**
     * Método para alterar o intervalo de recorrência de uma venda com pagamento recorrente no cartão de 
-    * crédito na Cielo por recurrentPaymentId (não altera a data da próxima recorrência, apenas define um novo intervalo após o próximo pagamento previsto)
+    * crédito na Cielo por recurrentPaymentId (não altera a data da próxima recorrência nem o dia, apenas define um novo intervalo após o próximo pagamento previsto)
     * 
     * @param producao Indica se é uma chamada de produção
     * @param recurrentPaymentId Número da recorrência gerado pela Cielo
@@ -1024,30 +1029,29 @@ public class FachadaCielo {
 	//1)Método de alteração de dados do comprador de venda recorrente não implementado na SDK Java da Cielo (Modificando dados do comprador)
 	//Não parece útil para a Surfix
 
-	//Dúvidas
-	
-	//Recorrencia por intervalo de meses
-	
-	//EndDate é a data da última compra? e se ela estiver fora do intervalo regular para mais
-	//ou menos? Ex: recorrencia mensal iniciando hj, dia 01/12/17, mensal e terminando 15/11/18.
-	//R: Cancela antes do próximo pagamento.
+	//Dúvidas:		
 	
 	//Tentando gerar 4x uma transação posterior de recorrencia e não autorizando
 	//como o lojista fica sabendo? Notificado via URL de notificação (para ok ou não). Como é isso?
 	//R: Pelo fluxograma, cancela a recorrência (pelo atendente, não se sabe)
 	
-	//Não há como saber se o cartão foi alterado com sucesso pois não são retornados dados do mesmo após a alteração,
-	//nem mesmo mascarados??
-	
-	//Como saber se uma recorrencia foi descontada no caso de um cancelamento de cartão??  SURFIX - WAGNER
-	
-	//Como saber se uma recorrencia programada está realmente desabilitada após sua consulta? status 1 ou 3?
-	//E qd eu reabilitá-la? se houver uma recorencia que passou um dia antes?
-	
 	//Método de consulta de recorrência diz o seguinte: A Consulta da Recorrência tras dados sobre 
 	//o agendamento e sobre o processo de transações que se repetem. 
 	//Elas não retornam dados sobre as transações em si. Para isso, deve ser realizado um 
 	//GET na transação (Disponivel em “Consultanto vendas (???)
+	
+	//Não há como saber se o cartão foi alterado com sucesso pois não são retornados dados do mesmo após a alteração,
+	//nem mesmo mascarados??
+	
+	//Como saber se uma recorrencia foi descontada no caso de um cancelamento de cartão?? 
+	//R: Via consulta de status	
+	
+	//Recorrencia por intervalo de meses	
+	//Quando alreramos data do prox pagamento, não se altera o dia de recorrencia nem o intervalo 
+	//Quando se altera o intervalo, não se altera a data da prox recorrenca nem o dia	
+		
+	//Como saber se uma recorrencia programada está realmente desabilitada após sua consulta? status 1 ou 3.
+	//E qd eu reabilitá-la? se houver uma recorencia que passou um dia antes?
 
 	private String recuperarErroIntegracao(int codigoErro) {
 		
