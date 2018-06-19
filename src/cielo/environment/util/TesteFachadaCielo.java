@@ -1,6 +1,6 @@
 package cielo.environment.util;
 
-import cieloecommerce.sdk.ecommerce.RecurrentSale;
+import cieloecommerce.sdk.ecommerce.Sale;
 
 public class TesteFachadaCielo {
 
@@ -14,7 +14,7 @@ public class TesteFachadaCielo {
 		/*
 		try {
 					
-			Payment payment = fachada.gerarPagamentoCreditoAVista(false, "2018010102", 66700, 
+			Payment payment = fachada.gerarPagamentoCreditoAVista("0001", "2018010102", 66700, 
 					FachadaCielo.BANDEIRA_VISA, "0000000000000001", 
 					"12/2018", "Fulano de Tal", "123", "Sistema Orion@");
 			
@@ -33,9 +33,9 @@ public class TesteFachadaCielo {
 		*/
 		
 		//Consulta de Venda no Cartão de Crédito por paymentId
-		/*
+		//
 		try {
-			Sale sale = fachada.consultarVendaCreditoAVistaPorPaymentId(false, "e157898f-7989-4768-bd08-8e07f53e7f47");
+			Sale sale = fachada.consultarVendaCreditoAVistaPorPaymentId("0001", "3962d113-cb81-4101-becf-dabb16fbde77");
 			
 			System.out.println("Operação concluída");			
 			System.out.println("Sale: " + sale.toString());
@@ -48,7 +48,7 @@ public class TesteFachadaCielo {
 				e.getExcecaoOriginal().printStackTrace();
 			}							
 		}
-		*/
+		//
 		
 		//Consulta de Vendas por merchantOrderId
 		/*
@@ -106,7 +106,7 @@ public class TesteFachadaCielo {
 		/*
 		try {
 					
-			Payment payment = fachada.gerarPagamentoCreditoAVistaRecProg(false, "2018000321", 88800, 
+			Payment payment = fachada.gerarPagamentoCreditoAVistaRecProg(false, "2018000444", 11100, 
 					FachadaCielo.BANDEIRA_VISA, "0000000000000001", 
 					"12/2022", "Sicrano de Tal", "456", "Sistema Ennon@", FachadaCielo.RECORRENCIA_MENSAL, "2020-11-10");
 			
@@ -128,8 +128,8 @@ public class TesteFachadaCielo {
 		/*
 		try {
 					
-			Payment payment = fachada.gerarPagamentoCreditoAgendadoRecProg(false, "2018000001", 77700, 
-					FachadaCielo.BANDEIRA_VISA, "0000000000000001", 
+			Payment payment = fachada.gerarPagamentoCreditoAgendadoRecProg(false, "2018003321", 55500, 
+					FachadaCielo.BANDEIRA_VISA, "0000000000000002", 
 					"12/2018", "Fulano de Tal", "123", "Sistema Orion@", "2018-05-30", FachadaCielo.RECORRENCIA_MENSAL, "2019-11-10");
 			
 			System.out.println("Operação concluída");			
@@ -197,10 +197,10 @@ public class TesteFachadaCielo {
 		}
 		*/		
 		
-		//Alteração da data do próxima pagamento de um pagamento no Cartão de Crédito via recorrência por recurrrentPaymentId	
+		//Alteração da data do próximo pagamento de um pagamento no Cartão de Crédito via recorrência por recurrrentPaymentId	
 		/*
 		try {
-			fachada.alterarVendaCreditoRecProgDataProxRecPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8", "2018-05-26");
+			fachada.alterarVendaCreditoRecProgDataProxRecPorRecurrentPaymentId(false, "682c3327-b9ce-41c3-a501-627b12e5d739", "2018-06-01");
 			
 			System.out.println("Operação concluída");						
 		
@@ -236,7 +236,7 @@ public class TesteFachadaCielo {
 		//Desabilita um pagamento no Cartão de Crédito via recorrência por recurrrentPaymentId	
 		/*
 		try {
-			fachada.desabilitarVendaCreditoRecProgPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8");
+			fachada.desabilitarVendaCreditoRecProgPorRecurrentPaymentId(false, "682c3327-b9ce-41c3-a501-627b12e5d739");
 			
 			System.out.println("Operação concluída");						
 		
@@ -253,7 +253,7 @@ public class TesteFachadaCielo {
 		//Reabilita um pagamento no Cartão de Crédito via recorrência por recurrrentPaymentId	
 		/*
 		try {
-			fachada.reabilitarVendaCreditoRecProgPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8");
+			fachada.reabilitarVendaCreditoRecProgPorRecurrentPaymentId(false, "682c3327-b9ce-41c3-a501-627b12e5d739");
 			
 			System.out.println("Operação concluída");						
 		
@@ -287,9 +287,9 @@ public class TesteFachadaCielo {
 		*/			
 		
 		//Consulta de Venda no Cartão de Crédito via recorrência por recurrrentPaymentId
-		//
+		/*
 		try {
-			RecurrentSale recSale = fachada.consultarVendaCreditoRecProgPorRecurrentPaymentId(false, "b7046d95-11c0-4025-9f5d-71e5102e3dd8");
+			RecurrentSale recSale = fachada.consultarVendaCreditoRecProgPorRecurrentPaymentId(false, "85b817bf-495b-4e6c-b2cc-53c836dc9c94");
 			
 			System.out.println();
 			System.out.println("Operação concluída");			
@@ -304,9 +304,10 @@ public class TesteFachadaCielo {
 				e.getExcecaoOriginal().printStackTrace();
 			}							
 		}
-		//					
+		*/					
 		
 		//Módulo 2 ******************************************************		
+				
 	}
 	
 	

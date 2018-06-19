@@ -23,21 +23,48 @@ public class FachadaCielo {
 	public static final String RECORRENCIA_BIMESTRAL = "Bimonthly";//2
 	public static final String RECORRENCIA_TRIMESTRAL = "Quarterly";//3	
 	//public static final String RECORRENCIA_QUADRIMESTRAL = "FourMonths";//4
-	//A alteração de Intervalo aceita números de 1 em diante, representando o número de meses de intervalo	
+	//A alteração de Intervalo aceita números de 1 em diante, representando o número de meses do intervalo	
 	public static final String RECORRENCIA_SEMESTRAL = "SemiAnnual";//6	
 	public static final String RECORRENCIA_ANUAL = "Annual";//12		
-			
-	private static final String MERCHANT_ID_TESTE = "5da83acc-6fd6-48ec-b22a-f7e9b5de8bef";
-	private static final String MERCHANT_KEY_TESTE = "ILWIORZCPKQUYZCYNSSJGXPDUAOPCODLGGAOFDGH";
-	
-	private static final String MERCHANT_ID_PRODUCAO = "7e326012-288a-4acb-a961-c71e545b32bc";
-	private static final String MERCHANT_KEY_PRODUCAO = "UQR7HP9VrTGwoo0dFx8SRCKaUvfLi9gb47xMtnro";	
-	//private static final String MERCHANT_ID_PRODUCAO = "5da83acc-6fd6-48ec-b22a-f7e9b5de8bef";
-	//private static final String MERCHANT_KEY_PRODUCAO = "ILWIORZCPKQUYZCYNSSJGXPDUAOPCODLGGAOFDGH";
+					
+	private static final String TESTE_PROPERTY = "prod";
+	private static final String TESTE_VALUE = "true";
+	private static final String TESTE_ID = "0000";
+	private static final String SUFIXO_ID = "-id";
+	private static final String SUFIXO_KEY = "-key";
 	
 	private static FachadaCielo instancia;
 	
-	private FachadaCielo() {		
+	private final Configuracao configuracao;
+	
+	private final boolean modoProd;
+	private final String idTeste;
+	private final String keyTeste;	
+			
+	private FachadaCielo() {
+		this.configuracao = Configuracao.getInstancia();
+		
+		String prod = this.configuracao.getProperty(FachadaCielo.TESTE_PROPERTY);
+		if (prod != null && prod.equals(FachadaCielo.TESTE_VALUE)) {
+			this.modoProd = true;
+			this.idTeste = "";
+			this.keyTeste = "";
+		} else {			
+			String idPre = this.configuracao.getProperty(FachadaCielo.TESTE_ID + FachadaCielo.SUFIXO_ID);
+			if (idPre != null) {						
+				this.idTeste = idPre;
+			} else {
+				this.idTeste = "";
+			}
+			String keyPre = this.configuracao.getProperty(FachadaCielo.TESTE_ID + FachadaCielo.SUFIXO_KEY);
+			if (keyPre != null) {		
+				this.keyTeste = keyPre;
+			} else {	
+				this.keyTeste = "";
+			}
+			this.modoProd = false;
+		}
+				
 	}
 	
 	public static FachadaCielo getInstancia() {
@@ -52,7 +79,7 @@ public class FachadaCielo {
 	/**
     * Método para realizar pagamento no cartão de crédito à vista na Cielo
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param numPedidoVirtual Número do pedido gerado pela lojaVirtual
     * @param valor Valor do pedido em centavos
     * @param bandeiraCartao Bandeira do cartao (FachadaCielo.BANDEIRA_VISA ou FachadaCielo.BANDEIRA_MASTERCARD)
@@ -64,7 +91,7 @@ public class FachadaCielo {
     * 
     * @return Payment Dados do pagamento realizado (PaymentId, TID e demais informações)
     */
-	public Payment gerarPagamentoCreditoAVista(boolean producao, String numPedidoVirtual, Integer valor,
+	public Payment gerarPagamentoCreditoAVista(String idMerchant, String numPedidoVirtual, Integer valor,
 			String bandeiraCartao, String numCartao, String mesAnoExpDate, 
 			String nomeClienteCartao, String cvv,
 			String descricaoVenda) throws FachadaCieloException {
@@ -74,6 +101,25 @@ public class FachadaCielo {
 		Merchant merchant;
 		Environment environment;
 		
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
+			environment = Environment.PRODUCTION;
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
+			environment = Environment.SANDBOX;
+		}		
+		//		
+		
+		//
+		/*
 		if (producao) {
 			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
 			environment = Environment.PRODUCTION;
@@ -81,6 +127,8 @@ public class FachadaCielo {
 			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
 			environment = Environment.SANDBOX;
 		}
+		*/
+		//
 					
 		Sale sale = new Sale(numPedidoVirtual);
 		
@@ -132,12 +180,12 @@ public class FachadaCielo {
 	/**
     * Método para consultar venda no cartão de crédito à vista na Cielo por paymentId
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param paymentId Número do pagamento gerado pela Cielo
     * 
     * @return Sale Dados da venda realizada
     */	
-	public Sale consultarVendaCreditoAVistaPorPaymentId(boolean producao, String paymentId) 
+	public Sale consultarVendaCreditoAVistaPorPaymentId(String idMerchant, String paymentId) 
 			throws FachadaCieloException {
 		
 		Sale sale;
@@ -145,13 +193,22 @@ public class FachadaCielo {
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//		
 		
 		try {
 			
@@ -186,26 +243,35 @@ public class FachadaCielo {
 	/**
     * Método para consultar vendas na Cielo pelo número do pedido gerado pela loja virtual
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param numPedidoVirtual Número do pedido gerado pela loja virtual
     * 
     * @return Payment[] Array dos pagamentos gerados pelo número do pedido enviado
     */		
-	public Payment[] consultarVendasPorNumPedidoVirtual(boolean producao, String numPedidoVirtual) 
+	public Payment[] consultarVendasPorNumPedidoVirtual(String idMerchant, String numPedidoVirtual) 
 			throws FachadaCieloException {
 		
 		Payment[] payments;
 		
 		Merchant merchant;
 		Environment environment;
-		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+			
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//
 		
 		try {
 			
@@ -249,12 +315,12 @@ public class FachadaCielo {
 	* Pode ser via paymentId (garantido) ou merchantOrderId (cancela apenas o último pagamento 
 	* com o referido Id, impossibilitando o cancelamento de anteriores que possam existir
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param paymentId Número do pagamento gerado pela Cielo
     * 
     * @return SaleResponse Dados da venda que teve seu pagamento cancelado
     */		
-	public SaleResponse cancelarPagamentoTotalCreditoAVista(boolean producao, String paymentId) 
+	public SaleResponse cancelarPagamentoTotalCreditoAVista(String idMerchant, String paymentId) 
 			throws FachadaCieloException {
 		
 		SaleResponse saleResp;
@@ -262,13 +328,22 @@ public class FachadaCielo {
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//
 		
 		try {
 			
@@ -341,7 +416,7 @@ public class FachadaCielo {
     * Método para realizar pagamento recorrente no cartão de crédito com primeira parcela à vista na Cielo
     * OBS: Guardar o paymentId individual dessa parcela inicial bem como o Payment.RecurrentPayment.recurrementPaymentId da recorrência
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param numPedidoVirtual Número do pedido gerado pela lojaVirtual
     * @param valor Valor do pedido em centavos
     * @param bandeiraCartao Bandeira do cartao (FachadaCielo.BANDEIRA_VISA ou FachadaCielo.BANDEIRA_MASTERCARD)
@@ -361,7 +436,7 @@ public class FachadaCielo {
     * 
     * @return Payment Dados do pagamento realizado (PaymentId, TID e demais informações)
     */
-	public Payment gerarPagamentoCreditoAVistaRecProg(boolean producao, String numPedidoVirtual, Integer valor,
+	public Payment gerarPagamentoCreditoAVistaRecProg(String idMerchant, String numPedidoVirtual, Integer valor,
 			String bandeiraCartao, String numCartao, String mesAnoExpDate, String nomeClienteCartao, 
 			String cvv, String descricaoVenda, String intervalo, String dataFinal) throws FachadaCieloException {
 					
@@ -370,13 +445,22 @@ public class FachadaCielo {
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//
 					
 		Sale sale = new Sale(numPedidoVirtual);
 		
@@ -456,7 +540,7 @@ public class FachadaCielo {
     * Método para realizar pagamento recorrente no cartão de crédito com primeira parcela agendada na Cielo
     * OBS: Guardar o paymentId individual dessa parcela inicial bem como o Payment.RecurrentPayment.recurrementPaymentId da recorrência
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param numPedidoVirtual Número do pedido gerado pela lojaVirtual
     * @param valor Valor do pedido em centavos
     * @param bandeiraCartao Bandeira do cartao (FachadaCielo.BANDEIRA_VISA ou FachadaCielo.BANDEIRA_MASTERCARD)
@@ -476,7 +560,7 @@ public class FachadaCielo {
     * 
     * @return Payment Dados do pagamento realizado (PaymentId, TID e demais informações)
     */
-	public Payment gerarPagamentoCreditoAgendadoRecProg(boolean producao, String numPedidoVirtual, Integer valor,
+	public Payment gerarPagamentoCreditoAgendadoRecProg(String idMerchant, String numPedidoVirtual, Integer valor,
 			String bandeiraCartao, String numCartao, String mesAnoExpDate, String nomeClienteCartao, 
 			String cvv, String descricaoVenda, String dataInicial, String intervalo, String dataFinal) throws FachadaCieloException {
 					
@@ -485,13 +569,22 @@ public class FachadaCielo {
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//
 					
 		Sale sale = new Sale(numPedidoVirtual);
 		
@@ -571,7 +664,7 @@ public class FachadaCielo {
 	/**
     * Método para consultar venda com pagamento recorrente no cartão de crédito por recurrentPaymentId 
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param recurrentPaymentId Número da recorrência gerado pela Cielo
     * 
     * @return RecurrentSale Dados da venda recorrente realizada (veririfcar campo recurrentPayment.status
@@ -581,7 +674,7 @@ public class FachadaCielo {
     *																4 - Desativada por numero de retentativas 
     *																5 - Desativada por cartão de crédito vencido)
     */	
-	public RecurrentSale consultarVendaCreditoRecProgPorRecurrentPaymentId(boolean producao, String recurrentPaymentId) 
+	public RecurrentSale consultarVendaCreditoRecProgPorRecurrentPaymentId(String idMerchant, String recurrentPaymentId) 
 			throws FachadaCieloException {
 		
 		RecurrentSale recSale;
@@ -589,13 +682,22 @@ public class FachadaCielo {
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//
 		
 		try {
 			
@@ -630,7 +732,7 @@ public class FachadaCielo {
 	/**
     * Método para alterar os dados de um pagamento recorrente no cartão de crédito na Cielo por recurrentPaymentId
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param recurrentPaymentId Número da recorrência gerado pela Cielo
     * @param valor Valor do pedido em centavos
     * @param bandeiraCartao Bandeira do cartao (FachadaCielo.BANDEIRA_VISA ou FachadaCielo.BANDEIRA_MASTERCARD)
@@ -642,20 +744,29 @@ public class FachadaCielo {
     * 
     * @return Payment Dados do pagamento realizado (PaymentId, TID e demais informações)
     */
-	public void alterarPagamentoCreditoRecProgPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, int valor,
+	public void alterarPagamentoCreditoRecProgPorRecurrentPaymentId(String idMerchant, String recurrentPaymentId, int valor,
 			String bandeiraCartao, String numCartao, String mesAnoExpDate, String nomeClienteCartao, 
 			String cvv, String descricaoVenda) throws FachadaCieloException {
 										
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}					 
+		}		
+		//					 
 		
 		Payment payment = new Payment(valor);
 		
@@ -692,25 +803,34 @@ public class FachadaCielo {
 	/**
     * Método para alterar a data final de uma venda com pagamento recorrente no cartão de crédito por recurrentPaymentId 
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param recurrentPaymentId Número da recorrência gerado pela Cielo
     * @param dataFinal Data em que a recorrência será cancelada (formato YYYY-MM-DD). Sendo nulo não terá data final
     * 
     * @return void
     */	
-	public void alterarVendaCreditoRecProgDataFinalPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, String dataFinal) 
+	public void alterarVendaCreditoRecProgDataFinalPorRecurrentPaymentId(String idMerchant, String recurrentPaymentId, String dataFinal) 
 			throws FachadaCieloException {				
 		
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//
 		
 		try {
 			
@@ -737,25 +857,34 @@ public class FachadaCielo {
     * Método para alterar o dia do pagamento de uma venda com pagamento recorrente no cartão de 
     * crédito na Cielo por recurrentPaymentId 
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param recurrentPaymentId Número da recorrência gerado pela Cielo
     * @param diaRec Dia do mês em que a recorrência se repetirá
     * 
     * @return void
     */	
-	public void alterarVendaCreditoRecProgDiaRecPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, int diaRec) 
+	public void alterarVendaCreditoRecProgDiaRecPorRecurrentPaymentId(String idMerchant, String recurrentPaymentId, int diaRec) 
 			throws FachadaCieloException {				
 		
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//
 		
 		try {
 			
@@ -782,25 +911,34 @@ public class FachadaCielo {
     * Método para alterar o valor recorrente de uma venda com pagamento recorrente no cartão de 
     * crédito na Cielo por recurrentPaymentId 
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param recurrentPaymentId Número da recorrência gerado pela Cielo
     * @param valorRec Valor em centavos do pagamento recorrente
     * 
     * @return void
     */	
-	public void alterarVendaCreditoRecProgValorRecPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, int valorRec) 
+	public void alterarVendaCreditoRecProgValorRecPorRecurrentPaymentId(String idMerchant, String recurrentPaymentId, int valorRec) 
 			throws FachadaCieloException {				
 		
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//
 		
 		try {
 			
@@ -827,25 +965,34 @@ public class FachadaCielo {
     * Método para modificar a data do próximo pagamento de uma venda com pagamento recorrente no cartão de 
     * crédito na Cielo por recurrentPaymentId (não altera o dia da recorrência nem o intervalo, apenas define a data do próximo pagamento)
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param recurrentPaymentId Número da recorrência gerado pela Cielo
     * @param dataProxRec Data da próxima recorrência (formato YYYY-MM-DD)
     * 
     * @return void
     */	
-	public void alterarVendaCreditoRecProgDataProxRecPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, String dataProxRec) 
+	public void alterarVendaCreditoRecProgDataProxRecPorRecurrentPaymentId(String idMerchant, String recurrentPaymentId, String dataProxRec) 
 			throws FachadaCieloException {				
 		
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//
 		
 		try {
 			
@@ -872,7 +1019,7 @@ public class FachadaCielo {
     * Método para alterar o intervalo de recorrência de uma venda com pagamento recorrente no cartão de 
     * crédito na Cielo por recurrentPaymentId (não altera a data da próxima recorrência nem o dia, apenas define um novo intervalo após o próximo pagamento previsto)
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param recurrentPaymentId Número da recorrência gerado pela Cielo
     * @param intervalo Intervalo desejado de recorrência (FachadaCielo.RECORRENCIA_MENSAL, 
     * 													  FachadaCielo.RECORRENCIA_BIMESTRAL, 
@@ -883,19 +1030,28 @@ public class FachadaCielo {
     * 
     * @return void
     */	
-	public void alterarVendaCreditoRecProgIntervaloPorRecurrentPaymentId(boolean producao, String recurrentPaymentId, String intervalo) 
+	public void alterarVendaCreditoRecProgIntervaloPorRecurrentPaymentId(String idMerchant, String recurrentPaymentId, String intervalo) 
 			throws FachadaCieloException {				
 		
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//
 		
 		int months;
 		if (intervalo == null || intervalo.equals(RECORRENCIA_MENSAL)) {				
@@ -941,24 +1097,33 @@ public class FachadaCielo {
 	/**
     * Método para desabilitar uma venda com pagamento recorrente no cartão de crédito na Cielo por recurrentPaymentId 
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param recurrentPaymentId Número da recorrência gerado pela Cielo
     * 
     * @return void
     */	
-	public void desabilitarVendaCreditoRecProgPorRecurrentPaymentId(boolean producao, String recurrentPaymentId) 
+	public void desabilitarVendaCreditoRecProgPorRecurrentPaymentId(String idMerchant, String recurrentPaymentId) 
 			throws FachadaCieloException {				
 		
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//
 		
 		try {
 			
@@ -984,24 +1149,33 @@ public class FachadaCielo {
 	/**
     * Método para reabilitar uma venda com pagamento recorrente no cartão de crédito na Cielo por recurrentPaymentId 
     * 
-    * @param producao Indica se é uma chamada de produção
+    * @param idMerchant Id da empresa cadastrada na Cielo
     * @param recurrentPaymentId Número da recorrência gerado pela Cielo
     * 
     * @return void
     */	
-	public void reabilitarVendaCreditoRecProgPorRecurrentPaymentId(boolean producao, String recurrentPaymentId) 
+	public void reabilitarVendaCreditoRecProgPorRecurrentPaymentId(String idMerchant, String recurrentPaymentId) 
 			throws FachadaCieloException {				
 		
 		Merchant merchant;
 		Environment environment;
 		
-		if (producao) {
-			merchant = new Merchant(MERCHANT_ID_PRODUCAO, MERCHANT_KEY_PRODUCAO);
+		//	
+		if (this.modoProd) {
+			String merchantId = this.configuracao.getProperty(idMerchant + FachadaCielo.SUFIXO_ID);
+			String merchantKey = this.configuracao.getProperty(idMerchant+ FachadaCielo.SUFIXO_KEY);
+			
+			if (merchantId == null || merchantKey == null) {
+				throw new FachadaCieloException(null, "MerchantId/MerchantKey não definido");
+			}
+			
+			merchant = new Merchant(merchantId, merchantKey);			
 			environment = Environment.PRODUCTION;
-		} else {
-			merchant = new Merchant(MERCHANT_ID_TESTE, MERCHANT_KEY_TESTE);
+		} else {			
+			merchant = new Merchant(this.idTeste, this.keyTeste);
 			environment = Environment.SANDBOX;
-		}
+		}		
+		//
 		
 		try {
 			
