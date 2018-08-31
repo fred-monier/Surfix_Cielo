@@ -1,12 +1,10 @@
 package cielo.environment.util;
 
-import cieloecommerce.sdk.ecommerce.Sale;
-
 public class TesteFachadaCielo {
 
 	public static void main(String[] args) {
 		
-		FachadaCielo fachada = FachadaCielo.getInstancia();
+		//FachadaCielo fachada = FachadaCielo.getInstancia();
 		
 		//Módulo 1 ******************************************************
 		
@@ -33,7 +31,7 @@ public class TesteFachadaCielo {
 		*/
 		
 		//Consulta de Venda no Cartão de Crédito por paymentId
-		//
+		/*
 		try {
 			Sale sale = fachada.consultarVendaCreditoAVistaPorPaymentId("0001", "3962d113-cb81-4101-becf-dabb16fbde77");
 			
@@ -48,7 +46,7 @@ public class TesteFachadaCielo {
 				e.getExcecaoOriginal().printStackTrace();
 			}							
 		}
-		//
+		*/
 		
 		//Consulta de Vendas por merchantOrderId
 		/*
@@ -149,7 +147,7 @@ public class TesteFachadaCielo {
 		//Alteração de Data Final de Venda no Cartão de Crédito via recorrência por recurrrentPaymentId	
 		/*
 		try {
-			fachada.alterarVendaCreditoRecProgDataFinalPorRecurrentPaymentId(false, "d8916a5d-1395-40ce-8b94-0b5ddfc15242", "2019-04-04");
+			fachada.alterarVendaCreditoRecProgDataFinalPorRecurrentPaymentId("0000", "6c7d3f18-6a85-4207-948e-510822da3481", "2020-08-15");
 			
 			System.out.println("Operação concluída");						
 		
