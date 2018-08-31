@@ -43,14 +43,10 @@ public class FachadaCielo {
 	
 	/**
     * Método para realizar pagamento no cartão de crédito à vista na Cielo
-    * 
-    * 
-    * 
+	*
     * @param modoProd Indica se esta uma requisição de produção
     * @param mecId merchantId na Cielo
     * @param mecKey merchantKey na Cielo
-    * 
-    * 
     * @param numPedidoVirtual Número do pedido gerado pela lojaVirtual
     * @param valor Valor do pedido em centavos
     * @param bandeiraCartao Bandeira do cartao (FachadaCielo.BANDEIRA_VISA ou FachadaCielo.BANDEIRA_MASTERCARD)
